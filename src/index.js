@@ -16,11 +16,11 @@ const app = express();
             throw error;
         })
 
-        app.listen(process.env.PORT, ()=>{
+        app.listen(process.env.PORT || 8000, ()=>{
             console.log(`App listening at port ${process.env.PORT}`);
 })
 
     } catch(error){
-        console.log(error);
+        console.log('MONGODB connection FAILED',error);
     }
 })()
