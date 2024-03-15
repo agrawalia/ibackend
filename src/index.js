@@ -31,6 +31,6 @@ try{
     app.listen(process.env.PORT || 8000, ()=>{
         console.log(`App listening at port ${process.env.PORT}`);
     })
-    } catch(error){
-        console.log('MONGODB connection FAILED ',error);
-    }
+} catch(error) {
+    console.log('MONGODB connection FAILED ',error);
+}
