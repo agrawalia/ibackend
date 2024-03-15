@@ -3,6 +3,7 @@ import {ApiError} from  '../utils/ApiError.js'
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import {User} from "../models/user.model.js";
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { checkUserExist, createUser, findUserById } from '../services/user.service.js';
 
 const registerUser = asyncHandler (async (req, res) => {
 
@@ -14,8 +15,7 @@ const registerUser = asyncHandler (async (req, res) => {
     }
 
     //Check if User already exist
-    const userAlreadyExist = await User.findOne({$or: [{username}, {email}]});
-
+    const userAlreadyExist = await checkUserExist(req.body);
     if(userAlreadyExist){
         throw new ApiError(409,"User with this username or email already exists")
     }
@@ -40,17 +40,8 @@ const registerUser = asyncHandler (async (req, res) => {
     if(!avatar)
         throw new ApiError(500, 'Avatar image is not uploaded');
 
-    const user = await User.create({
-        fullName,
-        avatar : avatar.url,
-        coverImage : coverImage?.url || '',
-        email,
-        password,
-        username : username.toLowerCase(),
-    })
-
-    const createdUser = await User.findById(user._id)
-                                .select("-passsword -refreshToken")
+    const user = await createUser(req.body, avatar, coverImage);
+    const createdUser = await findUserById(user._id);
 
     if(!createdUser)
         throw new ApiError(500, "User creation failed");
