@@ -1,7 +1,7 @@
 const asyncHandler = (requestHandler) => {
-    async (req, res, next) => {
+    return async (req, res, next) => {
         try{
-            await requestHandler(req, res, next);
+            return await requestHandler(req, res, next);
         } catch(error) {
             req.status(error.code || 500).json({
                 success : false,
@@ -10,3 +10,5 @@ const asyncHandler = (requestHandler) => {
         }
     }
 }
+
+export {asyncHandler};
