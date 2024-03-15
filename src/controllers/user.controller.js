@@ -7,11 +7,9 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 const registerUser = asyncHandler (async (req, res) => {
 
     const {fullName, email, username, password} = req.body;
-    console.log(email);
-
 
     //Validation for null
-    if(![fullName, email, username, password].some(el => el?.trim() == "" )) {
+    if([fullName, email, username, password].some(el => el?.trim() == "" )) {
         throw new ApiError(400, "Please  provide full name, email, username and password");
     }
 
@@ -23,8 +21,14 @@ const registerUser = asyncHandler (async (req, res) => {
     }
 
     //get file path where image is stored in local path by multer
+
     const avatarLocalPath = req.files?.avatar[0]?.path || '';
-    const coverImageLocalPath = req.files?.coverImage[0]?.path || '';
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path || '';
+
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
 
     if(!avatarLocalPath)
         throw new ApiError(422,'Avatar image is required')

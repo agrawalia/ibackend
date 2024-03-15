@@ -1,4 +1,4 @@
-import mongoose , {Schema} from mongoose;
+import mongoose , {Schema} from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
@@ -23,8 +23,8 @@ const userSchema = new Schema(
             type : String,
             required : true,
             unique : false,
-            lowercase : true,
-            trim : true
+            lowercase : false,
+            trim : false
         },
         avatar : {
             type : String,
@@ -32,7 +32,7 @@ const userSchema = new Schema(
         },
         coverImage : {
             type : String,
-            required : true
+            required : false
         },
         password : {
             type : String,
