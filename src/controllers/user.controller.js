@@ -1,12 +1,10 @@
-import {asyncHandler} from  '../utils/asyncHandler.js';
+import { asyncHandler } from  '../utils/asyncHandler.js';
 import {ApiError} from  '../utils/ApiError.js'
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
-import {User} from "../models/user.model.js";
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { checkUserExist, createUser, findUserById } from '../services/user.service.js';
 
-const registerUser = asyncHandler (async (req, res) => {
-
+const registerUser =  asyncHandler(async (req, res) => {
     const {fullName, email, username, password} = req.body;
 
     //Validation for null
@@ -48,7 +46,7 @@ const registerUser = asyncHandler (async (req, res) => {
 
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered Successfully !!")
-    )
+    ) 
 })
 
 export {registerUser}

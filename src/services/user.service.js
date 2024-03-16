@@ -1,5 +1,5 @@
 import {User} from "../models/user.model.js";
-
+import { ApiError } from "../utils/ApiError.js";
 
 const checkUserExist = async({email, username}) =>{
     let user = await User.findOne({$or:[{username}, {email}]}).lean();  
@@ -7,15 +7,26 @@ const checkUserExist = async({email, username}) =>{
 };
 
 const createUser = async({fullName, email, password, username}, avatar, coverImage) => {
-    const newUser = await User.create({
-        fullName,
-        email,
-        password,
-        username : username.toLowerCase(),
-        avatar : avatar?.url,
-        coverImage : coverImage?.url || ''
-    })
-    return !!newUser;
+    try{
+        if(!avatar?.url)
+            throw new ApiError(400,"Please provide a profile picture URL");
+        const avatarUrl = avatar.url;
+        const coverImageUrl = coverImage?.url ? coverImage.url : '';
+
+        const newUser = await User.create({
+            fullName,
+            email,
+            password,
+            username : username.toLowerCase(),
+            avatar : avatarUrl,
+            coverImage : coverImageUrl
+        })
+
+        return newUser;
+    } catch (error) {
+        console.log("Something went wrong while creating a user", error);
+        throw new ApiError(error.statusCode || 500, error.message || "Something went wrong while creating a user");
+    }
 }
 
 const findUserById = async(userId) => {
