@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import {findUserById} from "../services/user.service.js";
+import userService from "../services/user.service.js";
 
 const verifyUser = asyncHandler( async(req, _, next) => {
 
@@ -12,7 +12,7 @@ const verifyUser = asyncHandler( async(req, _, next) => {
     
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     
-        const user = await findUserById(decodedToken._id);
+        const user = await userService.findUserById(decodedToken._id);
     
         if(!user)
             throw new ApiError(401, "Invalid Access Token");

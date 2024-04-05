@@ -2,7 +2,7 @@ import { asyncHandler } from  '../utils/asyncHandler.js';
 import {ApiError} from  '../utils/ApiError.js'
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { createUser, findUserById, findUserByEmailOrUsername, generateAccessAndRefreshToken, logoutUser } from '../services/user.service.js';
+import userService from '../services/user.service.js';
 import jwt from "jsonwebtoken";
 
 const registerUser =  asyncHandler(async (req, res) => {
@@ -14,7 +14,7 @@ const registerUser =  asyncHandler(async (req, res) => {
     }
 
     //Check if User already exist
-    const userAlreadyExist = await findUserByEmailOrUsername(username, email);
+    const userAlreadyExist = await userService.findUserByEmailOrUsername(username, email);
     if(userAlreadyExist){
         throw new ApiError(409,"User with this username or email already exists")
     }
@@ -39,8 +39,8 @@ const registerUser =  asyncHandler(async (req, res) => {
     if(!avatar)
         throw new ApiError(500, 'Avatar image is not uploaded');
 
-    const user = await createUser(req.body, avatar, coverImage);
-    const createdUser = await findUserById(user._id);
+    const user = await userService.createUser(req.body, avatar, coverImage);
+    const createdUser = await userService.findUserById(user._id);
 
     if(!createdUser)
         throw new ApiError(500, "User creation failed");
@@ -58,7 +58,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //find user by email or username
 
-    const user = await findUserByEmailOrUsername(email, username);
+    const user = await userService.findUserByEmailOrUsername(email, username);
     if(!user)
         throw new ApiError(404,"Use  does not exist");
 
@@ -67,7 +67,7 @@ const loginUser = asyncHandler(async (req, res) => {
     if(!isPasswordValid)
         throw new ApiError(401, "Invalid user credentials");
 
-    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user);
+    const {accessToken, refreshToken} = await userService.generateAccessAndRefreshToken(user);
 
     const options = {
         httpOnly : true,
@@ -90,7 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler( async(req, res) => {
-    await logoutUser(req.user._id);
+    await userService.logoutUser(req.user._id);
 
     const options = {
         httpOnly : true,
@@ -113,7 +113,7 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
         process.env.REFRESH_TOKEN_SECRET
     )
 
-    const user = await findUserById(decodedToken?._id);
+    const user = await userService.findUserById(decodedToken?._id);
     if(!user) throw new ApiError(401, "Invalid Refresh Token");
     if(incomingRefreshToken !== user?.refreshToken) throw new ApiError(401, "Refresh token is expired or used");
 
@@ -122,7 +122,7 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
         secure : true
     }
 
-    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+    const {accessToken, newRefreshToken} = await userService.generateAccessAndRefreshToken(user._id);
 
     return res
     .status(200)
@@ -138,9 +138,94 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
 
 })
 
+const changeCurrentPassword = asyncHandler(async(req, res) => {
+    const {oldPassword, newPassword} = req.body;
+    const userId = req.user?._id;
+    const user = await userService.findUserById(userId);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if(!isPasswordCorrect) throw new ApiError(401, "Invalid old password");
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave: false});
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{}, "Password changed successfully"))
+    
+})
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current User fetched successfully"))
+})
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const {fullName, email} = req.body;
+
+    if(!fullName || !email) throw new ApiError(400, "All fields are required");
+
+    const user = await userService.updateAccountDetails(req.user?._id, req.body);
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        user,
+        "User details updated successfully"
+    ))
+})
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
+    if(!avatarLocalPath) throw new ApiError(400, "Avatar file is missing");
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if(!avatar?.url) throw new ApiError(400, "Something went wrong while uploading avatar");
+
+    const user = await userService.updateUserAvatar(req.user?._id, avatar?.url);
+
+    //TODO: delete old image from cloudinary
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        user,
+        "User avatar update successfully"
+    ))
+
+})
+
+const updateUserCover = asyncHandler(async (req, res) => {
+    const coverImageLocalPath = req.file?.path;
+    if(!coverImageLocalPath) throw new ApiError(400, "Cover image file is missing");
+
+    const cover = await uploadOnCloudinary(coverImageLocalPath);
+    if(!cover?.url) throw new ApiError(400, "Something went wrong while uploading cover image");
+
+    const user = await userService.updateUserCover(req.user?._id, cover?.url);
+
+    //TODO: delete old image from cloudinary
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        user,
+        "User cover image update successfully"
+    ))
+})
+
 export {
     registerUser, 
     loginUser,
     logoutUser,
     refreshAccessToken,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCover,
+    changeCurrentPassword,
 }

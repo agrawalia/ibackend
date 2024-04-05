@@ -70,10 +70,51 @@ const logoutUser = async(userId) => {
         }
     )
 }
-export {
+
+const updateAccountDetails = async(userId, {fullName, email}) => {
+    return await User.findByIdAndUpdate(
+        userId,
+        {
+            $set : {fullName, email}
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+}
+
+const updateUserAvatar = async(userId, avatarUrl) => {
+    return await User.findByIdAndUpdate(
+        userId,
+        {
+            $set : {avatar : avatarUrl}
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+}
+
+
+const updateUserCover = async(userId, coverImageUrl) => {
+    return await User.findByIdAndUpdate(
+        userId,
+        {
+            $set : {coverImage : coverImageUrl}
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+}
+
+export default {
     createUser,
     findUserById,
     findUserByEmailOrUsername,
     generateAccessAndRefreshToken,
     logoutUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCover,
 }
