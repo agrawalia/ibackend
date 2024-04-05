@@ -1,11 +1,6 @@
 import {User} from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const checkUserExist = async({email, username}) =>{
-    let user = await User.findOne({$or:[{username}, {email}]}).lean();  
-    return !!user;  // returns true if the user is found otherwise false
-};
-
 const createUser = async({fullName, email, password, username}, avatar, coverImage) => {
     try{
         if(!avatar?.url)
@@ -35,8 +30,50 @@ const findUserById = async(userId) => {
                     .lean()
 }
 
+const findUserByEmailOrUsername = async(username, email) =>{
+    let user;
+    if(username) {
+        user = await User.findOne( {username: username.toLowerCase()} )
+    }
+    else if(email) {
+        user = await User.findOne( {email} ).select('-password');
+    }
+
+    return user;
+
+}
+
+const generateAccessAndRefreshToken = async(user) => {
+    try{
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+        user.refreshToken = refreshToken;
+        await user.save({validateBeforeSave : false});
+
+        return {accessToken, refreshToken};
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating refresh and access token");
+    }
+}
+
+const logoutUser = async(userId) => {
+    return await User.findByIdAndUpdate(
+        userId,
+        {
+            $set: {
+                refreshToken : undefined
+            }
+        },
+        {
+            new : true
+        }
+    )
+}
 export {
-    checkUserExist,
     createUser,
     findUserById,
+    findUserByEmailOrUsername,
+    generateAccessAndRefreshToken,
+    logoutUser,
 }
