@@ -1,10 +1,14 @@
 import { asyncHandler } from  '../utils/asyncHandler.js';
-import {ApiError} from  '../utils/ApiError.js'
+import { ApiError } from  '../utils/ApiError.js'
 import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { extractImageNameFromUrl } from "../utils/utils.js";
 import userService from '../services/user.service.js';
 import jwt from "jsonwebtoken";
+const options = {
+    httpOnly : true,
+    secure : true
+}
 
 const registerUser =  asyncHandler(async (req, res) => {
     const {fullName, email, username, password} = req.body;
@@ -55,22 +59,14 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Username or email is required");
 
     //find user by email or username
-
-    const user = await userService.findUserByEmailOrUsername(email, username);
-    if(!user)
-        throw new ApiError(404,"Use  does not exist");
+    const user = await userService.findUserByEmailOrUsername(username, email);
+    if(!user) throw new ApiError(404, "User does not exist");
 
     const isPasswordValid = await user.isPasswordCorrect(password);
-
     if(!isPasswordValid)
         throw new ApiError(401, "Invalid user credentials");
 
     const {accessToken, refreshToken} = await userService.generateAccessAndRefreshToken(user);
-
-    const options = {
-        httpOnly : true,
-        secure : true
-    }
 
     return res
     .status(200)
@@ -89,11 +85,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler( async(req, res) => {
     await userService.logoutUser(req.user._id);
-
-    const options = {
-        httpOnly : true,
-        secure : true
-    }
 
     return res
     .status(200)
@@ -114,11 +105,6 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
     const user = await userService.findUserById(decodedToken?._id);
     if(!user) throw new ApiError(401, "Invalid Refresh Token");
     if(incomingRefreshToken !== user?.refreshToken) throw new ApiError(401, "Refresh token is expired or used");
-
-    const options = {
-        httpOnly : true,
-        secure : true
-    }
 
     const {accessToken, newRefreshToken} = await userService.generateAccessAndRefreshToken(user._id);
 

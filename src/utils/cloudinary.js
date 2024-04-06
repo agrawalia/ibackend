@@ -27,11 +27,9 @@ const deleteFromCloudinary = async(imageName) => {
     try {
         const response = await cloudinary.uploader.destroy(imageName);
         return response;
-
     } catch(error) {
         return null;
     }
-
 }
 
   export {

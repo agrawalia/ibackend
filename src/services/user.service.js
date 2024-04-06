@@ -3,18 +3,20 @@ import { ApiError } from "../utils/ApiError.js";
 
 const createUser = async({fullName, email, password, username}, avatar, coverImage) => {
     try{
-        if(!avatar?.url)
-            throw new ApiError(400,"Please provide a profile picture URL");
-        const avatarUrl = avatar.url;
-        const coverImageUrl = coverImage?.url ? coverImage.url : '';
+        // if(!avatar?.url)
+        //     throw new ApiError(400,"Please provide a profile picture URL");
+        // const avatarUrl = avatar.url;
+        //const coverImageUrl = coverImage?.url ? coverImage.url : '';
 
         const newUser = await User.create({
             fullName,
             email,
             password,
             username : username.toLowerCase(),
-            avatar : avatarUrl,
-            coverImage : coverImageUrl
+            //avatar : avatarUrl,
+            ...(avatar?.url && ({avatar : avatar?.url})),
+            ...(coverImage?.url && ({coverImage : coverImage?.url}))
+            //coverImage : coverImageUrl
         })
 
         return newUser;
@@ -36,11 +38,9 @@ const findUserByEmailOrUsername = async(username, email) =>{
         user = await User.findOne( {username: username.toLowerCase()} ).select('-password').lean();
     }
     else if(email) {
-        user = await User.findOne( {email} ).select('-password').lean();
+        user = await User.findOne( {email} ).select('-password');
     }
-
     return user;
-
 }
 
 const generateAccessAndRefreshToken = async(user) => {
