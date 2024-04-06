@@ -1,7 +1,8 @@
 import { asyncHandler } from  '../utils/asyncHandler.js';
 import {ApiError} from  '../utils/ApiError.js'
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { extractImageNameFromUrl } from "../utils/utils.js";
 import userService from '../services/user.service.js';
 import jwt from "jsonwebtoken";
 
@@ -29,21 +30,18 @@ const registerUser =  asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path;
     }
 
-    if(!avatarLocalPath)
-        throw new ApiError(422,'Avatar image is required')
+    if(!avatarLocalPath) throw new ApiError(422,'Avatar image is required')
 
     //upload images to cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);    
 
-    if(!avatar)
-        throw new ApiError(500, 'Avatar image is not uploaded');
+    if(!avatar) throw new ApiError(500, 'Avatar image is not uploaded');
 
     const user = await userService.createUser(req.body, avatar, coverImage);
     const createdUser = await userService.findUserById(user._id);
 
-    if(!createdUser)
-        throw new ApiError(500, "User creation failed");
+    if(!createdUser) throw new ApiError(500, "User creation failed");
 
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered Successfully !!")
@@ -126,8 +124,8 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
 
     return res
     .status(200)
-    .cookie("accessToken", accessToken)
-    .cookie("refreshToken", newRefreshToken)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newRefreshToken, options)
     .json((
         new ApiResponse(
             200,
@@ -186,7 +184,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
     const user = await userService.updateUserAvatar(req.user?._id, avatar?.url);
 
-    //TODO: delete old image from cloudinary
+    //delete old image from cloudinary
+    const userObject = await userService.findUserById(req.user?._id);
+    const oldAvatarUrl = userObject?.avatar;
+
+    const oldAvatarName = await extractImageNameFromUrl(oldAvatarUrl);
+
+    await deleteFromCloudinary(oldAvatarName);
 
     return res
     .status(200)
@@ -207,7 +211,14 @@ const updateUserCover = asyncHandler(async (req, res) => {
 
     const user = await userService.updateUserCover(req.user?._id, cover?.url);
 
-    //TODO: delete old image from cloudinary
+    //delete old image from cloudinary
+    const userObject = await userService.findUserById(req.user?._id);
+    const oldCoverUrl = userObject?.coverImage;
+
+    if(oldCoverUrl) { 
+        const oldCoverName = await extractImageNameFromUrl(oldCoverUrl);
+        await deleteFromCloudinary(oldCoverName);
+    }
 
     return res
     .status(200)

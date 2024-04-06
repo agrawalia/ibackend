@@ -23,22 +23,20 @@ const uploadOnCloudinary = async(localFilePath) => {
     }
 }
 
-const deleteImageFromCloudinary = async(localFilePath) => {
+const deleteFromCloudinary = async(imageName) => {
     try {
-        const response = await cloudinary.api.delete_resources(['frrbu4ot6ioc7wmoegip'], 
-            { type: 'upload', resource_type: 'image' }
-        )
-  
+        const response = await cloudinary.uploader.destroy(imageName);
+        return response;
 
     } catch(error) {
-
+        return null;
     }
 
 }
 
   export {
     uploadOnCloudinary,
-    deleteImageFromCloudinary,
+    deleteFromCloudinary,
 }
 
   
