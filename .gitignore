@@ -119,7 +119,7 @@ dist
 
 #uploaded files
 public/temp/*.png
-public/temp/*.jpeg
+public/temp/*
 
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node

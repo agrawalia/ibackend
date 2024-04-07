@@ -15,8 +15,10 @@ const registerUser =  asyncHandler(async (req, res) => {
 
     //Validation for null
     if([fullName, email, username, password].some(el => el?.trim() == "" )) {
-        throw new ApiError(400, "Please  provide full name, email, username and password");
+        throw new ApiError(400, "Please provide full name, email, username and password");
     }
+
+    if(!req.files?.avatar) throw new ApiError(400, "No avatar uploaded!");
 
     //Check if User already exist
     const userAlreadyExist = await userService.findUserByEmailOrUsername(username, email);
