@@ -134,8 +134,8 @@ const changeCurrentPassword = asyncHandler(async(req, res) => {
     await user.save({validateBeforeSave: false});
 
     return res
-    .status(200)
-    .json(new ApiResponse(200,{}, "Password changed successfully"))
+    .status(204)
+    .json(new ApiResponse(204,{}, "Password changed successfully"))
     
 })
 
