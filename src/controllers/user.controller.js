@@ -66,11 +66,18 @@ const loginUser = asyncHandler(async (req, res) => {
     if(!isPasswordValid)
         throw new ApiError(401, "Invalid user credentials");
 
-    const {accessToken, refreshToken} = await userService.generateAccessAndRefreshToken(user);
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave : false});
+    console.log(user)
+
+
+    //const {accessToken, refreshToken} = await userService.generateAccessAndRefreshToken(user);
 
     return res
     .status(200)
-    .cookie("accessToken",accessToken, options)
+    .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
         new ApiResponse(
@@ -168,14 +175,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     if(!avatar?.url) throw new ApiError(400, "Something went wrong while uploading avatar");
 
-    const user = await userService.updateUserAvatar(req.user?._id, avatar?.url);
-
     //delete old image from cloudinary
     const userObject = await userService.findUserById(req.user?._id);
     const oldAvatarUrl = userObject?.avatar;
 
     const oldAvatarName = await extractImageNameFromUrl(oldAvatarUrl);
 
+    const user = await userService.updateUserAvatar(req.user?._id, avatar?.url);
     await deleteFromCloudinary(oldAvatarName);
 
     return res

@@ -35,10 +35,10 @@ const findUserById = async(userId) => {
 const findUserByEmailOrUsername = async(username, email) =>{
     let user;
     if(username) {
-        user = await User.findOne( {username: username.toLowerCase()} ).select('-password').lean();
+        user = await User.findOne( {username: username.toLowerCase()} );
     }
     else if(email) {
-        user = await User.findOne( {email} ).select('-password');
+        user = await User.findOne( {email} );
     }
     return user;
 }
