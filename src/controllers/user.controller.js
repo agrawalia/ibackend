@@ -50,7 +50,11 @@ const registerUser =  asyncHandler(async (req, res) => {
     if(!createdUser) throw new ApiError(500, "User creation failed");
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered Successfully !!")
+        new ApiResponse(
+            200, 
+            createdUser, 
+            "User registered Successfully !!"
+        )
     ) 
 })
 
@@ -216,6 +220,37 @@ const updateUserCover = asyncHandler(async (req, res) => {
     ))
 })
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+
+    const {username} = req.params;
+    if(!username?.trim()) throw new ApiError(400, "Username is missing");
+
+    const channel = await userService.getUserChannelProfile(username);
+    if(!channel?.length) throw new ApiError(404, "Channel does not exist");
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        channel,
+        "User channel fetched successfully"
+    ))
+})
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
+    const user = await userService.getWatchHistory(userId);
+    if(!user?.length) throw new ApiError(404, "No watch history exist");
+
+    return res
+    .status(200)
+    .json(new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "Watch history fetched successfully"
+    ))
+})
+
 export {
     registerUser, 
     loginUser,
@@ -226,4 +261,6 @@ export {
     updateUserAvatar,
     updateUserCover,
     changeCurrentPassword,
+    getUserChannelProfile,
+    getWatchHistory,
 }

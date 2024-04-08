@@ -108,6 +108,22 @@ const updateUserCover = async(userId, coverImageUrl) => {
     ).select("-password")
 }
 
+const getUserChannelProfile = async(username) => {
+    return await User.aggregate([
+            {},
+            {},
+            {}
+    ])
+}
+
+const getWatchHistory = async(userId) => {
+    return await User.aggregate([
+        {},
+        {},
+        {}
+    ])
+}
+
 export default {
     createUser,
     findUserById,
@@ -117,4 +133,6 @@ export default {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCover,
+    getUserChannelProfile,
+    getWatchHistory,
 }
